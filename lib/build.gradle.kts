@@ -100,7 +100,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/sonamsamdupkhangsar/failedlogin-api")
+            url = uri("https://maven.pkg.github.com/sonamsamdupkhangsar/loginattempt-api")
             credentials {
                 username = System.getenv("USERNAME")
                 password = System.getenv("PERSONAL_ACCESS_TOKEN")
