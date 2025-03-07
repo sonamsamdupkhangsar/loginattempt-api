@@ -1,6 +1,6 @@
 logging:
   level:
-    root: info
+    root: warn
     me:
       sonam: debug
     cloud:
@@ -18,7 +18,7 @@ management:
       show-details: always
 
 server:
-  port: 9001
+  port: 8080
 
 spring:
   main:
@@ -47,20 +47,6 @@ auth-server:
     path: /oauth2/token
     grantType: client_credentials
 
-friendshipEndpoint: http://localhost:{port}
-
-userEndpoint: http://localhost:{port}
-
-notificationEndpoint: http://localhost:{port}
-
-endpoint:
-  user:
-    signup: "/public/user/signup"
-    update: "/user"
-    getbyauthId: "/user/{authid}"
-    matchingnames: "/user/names/{firstname}/{lastname}"
-    profilephoto: "/user/profilephoto"
-
 EUREKA_USER: test
 EUREKA_PASSWORD: test
 
@@ -71,10 +57,10 @@ eureka:
       defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
 
 permitpath:
-  - path: /users
-    httpMethods: POST
   - path: /users/api/health/*
     httpMethods: GET
+  - path: /access/login/success
+    httpMethods: PUT
 
 requestFilters:
   - in: /users
@@ -82,3 +68,7 @@ requestFilters:
     inHttpMethods: delete
     accessToken:
       option: forward
+
+lockOnFailedLoginAttempts: 3
+maxAccessWithinSeconds: 10
+resetAttemptIntervalInSeconds: 7

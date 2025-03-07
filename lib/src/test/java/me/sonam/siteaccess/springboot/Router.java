@@ -1,6 +1,7 @@
-package me.sonam.friendship.springboot;
+package me.sonam.siteaccess.springboot;
 
 
+import me.sonam.siteaccess.service.SiteAccessHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -16,15 +17,11 @@ public class Router {
     private static final Logger LOG = LoggerFactory.getLogger(Router.class);
 
     @Bean
-    public RouterFunction<ServerResponse> route(FriendshipHandler handler) {
+    public RouterFunction<ServerResponse> route(SiteAccessHandler handler) {
         LOG.info("building router function");
         return RouterFunctions
-                .route(POST("/friendships/request/{userId}"), handler::requestFriendshipWith)
-                .andRoute(DELETE("/friendships/decline/{friendshipId}"), handler::declineFriendship)
-                .andRoute(POST("/friendships/accept/{friendshipId}"), handler::acceptFriendship)
-                .andRoute(DELETE("/friendships/cancel/{friendshipId}"), handler::cancelFriendship)
-                .andRoute(GET("/friendships"), handler::findFriends)
-                .andRoute(GET("/friendships/{userId}"), handler::isFriends);
+                .route(PUT("/access/login/failed"), handler::loginFailed)
+                .andRoute(PUT("/access/login/success"), handler::loginSuccess);
 
     }
 }

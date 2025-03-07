@@ -93,14 +93,14 @@ publishing {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             groupId = "me.sonam"
-            artifactId = "friendship-api"
+            artifactId = "failedlogin-api"
             version = "1.0.0-SNAPSHOT"
         }
     }
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/sonamsamdupkhangsar/friendship-api")
+            url = uri("https://maven.pkg.github.com/sonamsamdupkhangsar/failedlogin-api")
             credentials {
                 username = System.getenv("USERNAME")
                 password = System.getenv("PERSONAL_ACCESS_TOKEN")

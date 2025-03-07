@@ -1,4 +1,4 @@
-package me.sonam.friendship.springboot;
+package me.sonam.siteaccess.springboot;
 
 import io.r2dbc.spi.ConnectionFactory;
 import org.slf4j.Logger;
