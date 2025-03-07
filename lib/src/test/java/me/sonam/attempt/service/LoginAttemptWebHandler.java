@@ -1,4 +1,4 @@
-package me.sonam.siteaccess.service;
+package me.sonam.attempt.service;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-public class SiteAccessWebHandler implements SiteAccessHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(SiteAccessWebHandler.class);
+public class LoginAttemptWebHandler implements AttemptHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(LoginAttemptWebHandler.class);
 
-    private SiteAccessLog siteAccessLog;
+    private AttemptLog attemptLog;
 
-    public SiteAccessWebHandler(SiteAccessLog siteAccessLog) {
-        this.siteAccessLog = siteAccessLog;
+    public LoginAttemptWebHandler(AttemptLog attemptLog) {
+        this.attemptLog = attemptLog;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class SiteAccessWebHandler implements SiteAccessHandler {
                 userId = UUID.fromString(map.get("userId").toString());
             }
             final String ipAddress = map.get("ipAddress").toString();
-            return siteAccessLog.loginFailed(username, userId, ipAddress, LocalDateTime.now());
+            return attemptLog.loginFailed(username, userId, ipAddress, LocalDateTime.now());
         })
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(Map.of("message", s)))
@@ -58,7 +58,7 @@ public class SiteAccessWebHandler implements SiteAccessHandler {
                     final String ipAddress = map.get("ipAddress").toString();
                     LOG.info("username: {}, userId: {}, ipAddress: {}", username, userId, ipAddress);
 
-                    return siteAccessLog.loginSuccess(username, userId, ipAddress, LocalDateTime.now());
+                    return attemptLog.loginSuccess(username, userId, ipAddress, LocalDateTime.now());
                 })
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(Map.of("message", s)))

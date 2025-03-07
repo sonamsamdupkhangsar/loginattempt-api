@@ -1,7 +1,7 @@
-package me.sonam.siteaccess.springboot;
+package me.sonam.attempt.springboot;
 
 
-import me.sonam.siteaccess.service.SiteAccessHandler;
+import me.sonam.attempt.service.AttemptHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -17,11 +17,11 @@ public class Router {
     private static final Logger LOG = LoggerFactory.getLogger(Router.class);
 
     @Bean
-    public RouterFunction<ServerResponse> route(SiteAccessHandler handler) {
+    public RouterFunction<ServerResponse> route(AttemptHandler handler) {
         LOG.info("building router function");
         return RouterFunctions
-                .route(PUT("/access/login/failed"), handler::loginFailed)
-                .andRoute(PUT("/access/login/success"), handler::loginSuccess);
+                .route(PUT("/attempts/login/failed"), handler::loginFailed)
+                .andRoute(PUT("/attempts/login/success"), handler::loginSuccess);
 
     }
 }

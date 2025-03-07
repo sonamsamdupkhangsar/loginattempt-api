@@ -1,9 +1,9 @@
-package me.sonam.siteaccess;
+package me.sonam.attempt;
 
-import me.sonam.siteaccess.persist.entity.UserLogin;
-import me.sonam.siteaccess.persist.repo.UserLoginRepository;
-import me.sonam.siteaccess.springboot.Application;
-import me.sonam.siteaccess.springboot.TestConfig;
+import me.sonam.attempt.persist.entity.LoginAttempt;
+import me.sonam.attempt.persist.repo.LoginAttemptRepository;
+import me.sonam.attempt.springboot.Application;
+import me.sonam.attempt.springboot.TestConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,11 +20,11 @@ import java.time.LocalDateTime;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {Application.class, TestConfig.class}, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith(MockitoExtension.class)
-public class UserLoginRepoTest {
-	private static final Logger LOG = LoggerFactory.getLogger(UserLoginRepoTest.class);
+public class LoginAttemptRepoTest {
+	private static final Logger LOG = LoggerFactory.getLogger(LoginAttemptRepoTest.class);
 
 	@Autowired
-	private UserLoginRepository userLoginRepository;
+	private LoginAttemptRepository loginAttemptRepository;
 
 	@Test
 	public void failedLogin() {
@@ -32,10 +32,10 @@ public class UserLoginRepoTest {
 
 		final String ipAddress = "{\"ip\": \"1.0.0.28\"}";
 
-		UserLogin userLogin = new UserLogin("lazybody62", null, ipAddress, UserLogin.Status.FAILED.name(), localDateTime);
-		userLoginRepository.save(userLogin).subscribe();
+		LoginAttempt loginAttempt = new LoginAttempt("lazybody62", null, ipAddress, LoginAttempt.Status.FAILED.name(), localDateTime);
+		loginAttemptRepository.save(loginAttempt).subscribe();
 
-		userLoginRepository.countByUsername("lazybody62").subscribe(integer ->
+		loginAttemptRepository.countByUsername("lazybody62").subscribe(integer ->
 				LOG.info("found {} rows matching username and ipaddress", integer));
 
 

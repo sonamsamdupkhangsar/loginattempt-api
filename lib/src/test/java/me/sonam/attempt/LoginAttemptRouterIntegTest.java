@@ -1,10 +1,8 @@
-package me.sonam.siteaccess;
+package me.sonam.attempt;
 
-import me.sonam.siteaccess.persist.entity.UserLogin;
-import me.sonam.siteaccess.persist.repo.UserLoginRepository;
-import me.sonam.siteaccess.springboot.Application;
-import me.sonam.siteaccess.springboot.TestConfig;
-import me.sonam.webclients.friendship.SeUserFriend;
+import me.sonam.attempt.persist.entity.LoginAttempt;
+import me.sonam.attempt.persist.repo.LoginAttemptRepository;
+import me.sonam.attempt.springboot.Application;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -40,7 +38,6 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity;
 
 /**
@@ -50,8 +47,8 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {Application.class}, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith(MockitoExtension.class)
-public class UserLoginRouterIntegTest {
-    private static final Logger LOG = LoggerFactory.getLogger(UserLoginRouterIntegTest.class);
+public class LoginAttemptRouterIntegTest {
+    private static final Logger LOG = LoggerFactory.getLogger(LoginAttemptRouterIntegTest.class);
 
     private static MockWebServer mockWebServer;
     @MockitoBean
@@ -64,7 +61,7 @@ public class UserLoginRouterIntegTest {
     ApplicationContext context;
 
     @Autowired
-    private UserLoginRepository userLoginRepository;
+    private LoginAttemptRepository loginAttemptRepository;
 
   //  @org.junit.jupiter.api.BeforeEach
     public void setup() {
@@ -104,11 +101,11 @@ public class UserLoginRouterIntegTest {
 
         final String ipAddress = "1.0.0.28";
 
-        UserLogin userLogin = new UserLogin("lazybody62", null, ipAddress, UserLogin.Status.FAILED.name(), localDateTime);
-        userLoginRepository.save(userLogin).subscribe();
+        LoginAttempt loginAttempt = new LoginAttempt("lazybody62", null, ipAddress, LoginAttempt.Status.FAILED.name(), localDateTime);
+        loginAttemptRepository.save(loginAttempt).subscribe();
 
-        userLogin.setAttemptCount(2);
-        userLoginRepository.save(userLogin).subscribe();
+        loginAttempt.setAttemptCount(2);
+        loginAttemptRepository.save(loginAttempt).subscribe();
 
         UUID userId = UUID.fromString("5d8de63a-0b45-4c33-b9eb-d7fb8d662107");
         final String authenticationId = "dave";
@@ -116,31 +113,31 @@ public class UserLoginRouterIntegTest {
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
         Map<String, String> bodyMap = new HashMap<>();
         bodyMap.put("userId", UUID.randomUUID().toString());
-        bodyMap.put("username", userLogin.getId());
-        bodyMap.put("ipAddress", userLogin.getIp());
+        bodyMap.put("username", loginAttempt.getId());
+        bodyMap.put("ipAddress", loginAttempt.getIp());
 
         EntityExchangeResult<String> entityExchangeResult = webTestClient.
-                put().uri("/access/login/success").bodyValue(bodyMap)
+                put().uri("/attempts/login/success").bodyValue(bodyMap)
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk().expectBody(String.class)
                 .returnResult();
 
-        assert userLogin.getId() != null;
-        Mono<UserLogin> userLoginMono = userLoginRepository.findById(userLogin.getId());
+        assert loginAttempt.getId() != null;
+        Mono<LoginAttempt> userLoginMono = loginAttemptRepository.findById(loginAttempt.getId());
         StepVerifier.create(userLoginMono).expectNextCount(1).verifyComplete();
 
-        userLoginMono = userLoginRepository.findById(userLogin.getId());
+        userLoginMono = loginAttemptRepository.findById(loginAttempt.getId());
         StepVerifier.create(userLoginMono).assertNext(userLogin1 -> {
             LOG.info("assert the status flag and the ipaddress with username and userid: {}", userLogin1);
-            assertThat(userLogin1.getId()).isEqualTo(userLogin.getId());
-            assertThat(userLogin1.getUserId()).isEqualTo(userLogin.getUserId());
-            assertThat(userLogin1.getIp()).isEqualTo(userLogin.getIp());
+            assertThat(userLogin1.getId()).isEqualTo(loginAttempt.getId());
+            assertThat(userLogin1.getUserId()).isEqualTo(loginAttempt.getUserId());
+            assertThat(userLogin1.getIp()).isEqualTo(loginAttempt.getIp());
             assertThat(userLogin1.getAttemptCount()).isEqualTo(0); //reset to 0 on success
         }).verifyComplete();
 
         LOG.info("after a success do a failed login attempt but should continue to allow another attempt");
         EntityExchangeResult<Map<String, String>> entityExchangeResult2 = webTestClient.
-                put().uri("/access/login/failed").bodyValue(bodyMap)
+                put().uri("/attempts/login/failed").bodyValue(bodyMap)
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk().expectBody(new ParameterizedTypeReference<Map<String, String>>(){})
                 .returnResult();
@@ -148,16 +145,16 @@ public class UserLoginRouterIntegTest {
         assertThat(entityExchangeResult2).isNotNull();
         assertThat(entityExchangeResult2.getResponseBody().get("message")).isEqualTo("CONTINUE");
 
-        assert userLogin.getId() != null;
-        userLoginMono = userLoginRepository.findById(userLogin.getId());
+        assert loginAttempt.getId() != null;
+        userLoginMono = loginAttemptRepository.findById(loginAttempt.getId());
         StepVerifier.create(userLoginMono).expectNextCount(1).verifyComplete();
 
-        userLoginMono = userLoginRepository.findById(userLogin.getId());
+        userLoginMono = loginAttemptRepository.findById(loginAttempt.getId());
         StepVerifier.create(userLoginMono).assertNext(userLogin1 -> {
             LOG.info("assert the status flag and the ipaddress with username and userid: {}", userLogin1);
-            assertThat(userLogin1.getId()).isEqualTo(userLogin.getId());
-            assertThat(userLogin1.getUserId()).isEqualTo(userLogin.getUserId());
-            assertThat(userLogin1.getIp()).isEqualTo(userLogin.getIp());
+            assertThat(userLogin1.getId()).isEqualTo(loginAttempt.getId());
+            assertThat(userLogin1.getUserId()).isEqualTo(loginAttempt.getUserId());
+            assertThat(userLogin1.getIp()).isEqualTo(loginAttempt.getIp());
             assertThat(userLogin1.getAttemptCount()).isEqualTo(1); //reset to 0 on success
         }).verifyComplete();
 
@@ -181,7 +178,7 @@ public class UserLoginRouterIntegTest {
 
         LOG.info("attempt 1");
         webTestClient.
-                put().uri("/access/login/failed").bodyValue(bodyMap)
+                put().uri("/attempts/login/failed").bodyValue(bodyMap)
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                         .returnResult(Map.class).getResponseBody().next()
@@ -194,10 +191,10 @@ public class UserLoginRouterIntegTest {
 
 
 
-        Mono<UserLogin> userLoginMono = userLoginRepository.findById("lazybody6");
+        Mono<LoginAttempt> userLoginMono = loginAttemptRepository.findById("lazybody6");
         StepVerifier.create(userLoginMono).expectNextCount(1).verifyComplete();
 
-        userLoginMono = userLoginRepository.findById("lazybody6");
+        userLoginMono = loginAttemptRepository.findById("lazybody6");
         StepVerifier.create(userLoginMono).assertNext(userLogin1 -> {
             LOG.info("assert the status flag and the ipaddress with username and userid: {}", userLogin1);
             assertThat(userLogin1.getId()).isEqualTo("lazybody6");
@@ -209,7 +206,7 @@ public class UserLoginRouterIntegTest {
 
         LOG.info("record 2nd login failed attempt");
         webTestClient.
-                put().uri("/access/login/failed").bodyValue(bodyMap)
+                put().uri("/attempts/login/failed").bodyValue(bodyMap)
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .returnResult(Map.class).getResponseBody().next()
@@ -222,10 +219,10 @@ public class UserLoginRouterIntegTest {
 
 
 
-        userLoginMono = userLoginRepository.findById("lazybody6");
+        userLoginMono = loginAttemptRepository.findById("lazybody6");
         StepVerifier.create(userLoginMono).expectNextCount(1).verifyComplete();
 
-        userLoginMono = userLoginRepository.findById("lazybody6");
+        userLoginMono = loginAttemptRepository.findById("lazybody6");
         StepVerifier.create(userLoginMono).assertNext(userLogin1 -> {
             LOG.info("assert the status flag and the ipaddress with username and userid: {}", userLogin1);
             assertThat(userLogin1.getId()).isEqualTo("lazybody6");
@@ -236,7 +233,7 @@ public class UserLoginRouterIntegTest {
 
         LOG.info("record 3rd login failed attempt, which should give LOCK_USER_OUT");
         webTestClient.
-                put().uri("/access/login/failed").bodyValue(bodyMap)
+                put().uri("/attempts/login/failed").bodyValue(bodyMap)
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .returnResult(Map.class).getResponseBody().next()
@@ -247,10 +244,10 @@ public class UserLoginRouterIntegTest {
                     return responseMap;
                 }).block();
 
-        userLoginMono = userLoginRepository.findById("lazybody6");
+        userLoginMono = loginAttemptRepository.findById("lazybody6");
         StepVerifier.create(userLoginMono).expectNextCount(1).verifyComplete();
 
-        userLoginMono = userLoginRepository.findById("lazybody6");
+        userLoginMono = loginAttemptRepository.findById("lazybody6");
         StepVerifier.create(userLoginMono).assertNext(userLogin1 -> {
             LOG.info("assert the status flag and the ipaddress with username and userid: {}", userLogin1);
             assertThat(userLogin1.getId()).isEqualTo("lazybody6");
@@ -265,7 +262,7 @@ public class UserLoginRouterIntegTest {
         //test for reset of userAttempt which should delete the userLogin row and create a new one
         LOG.info("after 3 seconds do another login failed attempt, which should give CONTINUE");
         webTestClient.
-                put().uri("/access/login/failed").bodyValue(bodyMap)
+                put().uri("/attempts/login/failed").bodyValue(bodyMap)
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .returnResult(Map.class).getResponseBody().next()
@@ -278,10 +275,10 @@ public class UserLoginRouterIntegTest {
 
 
 
-        userLoginMono = userLoginRepository.findById("lazybody6");
+        userLoginMono = loginAttemptRepository.findById("lazybody6");
         StepVerifier.create(userLoginMono).expectNextCount(1).verifyComplete();
 
-        userLoginMono = userLoginRepository.findById("lazybody6");
+        userLoginMono = loginAttemptRepository.findById("lazybody6");
         StepVerifier.create(userLoginMono).assertNext(userLogin1 -> {
             LOG.info("assert the status flag and the ipaddress with username and userid: {}", userLogin1);
             assertThat(userLogin1.getId()).isEqualTo("lazybody6");

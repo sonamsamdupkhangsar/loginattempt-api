@@ -1,6 +1,6 @@
-package me.sonam.siteaccess.springboot;
+package me.sonam.attempt.springboot;
 
-import me.sonam.siteaccess.service.LivenessReadinessHandler;
+import me.sonam.attempt.service.LivenessReadinessHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;

@@ -1,4 +1,4 @@
-package me.sonam.siteaccess.springboot;
+package me.sonam.attempt.springboot;
 
 
 import org.junit.jupiter.api.Test;

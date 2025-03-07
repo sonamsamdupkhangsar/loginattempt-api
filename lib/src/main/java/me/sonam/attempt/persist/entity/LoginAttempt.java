@@ -1,4 +1,4 @@
-package me.sonam.siteaccess.persist.entity;
+package me.sonam.attempt.persist.entity;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -7,7 +7,7 @@ import org.springframework.data.domain.Persistable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class UserLogin implements Persistable<String> {
+public class LoginAttempt implements Persistable<String> {
     public enum Status {
         SUCCESS, FAILED
     }
@@ -24,7 +24,7 @@ public class UserLogin implements Persistable<String> {
     @Transient
     private boolean newRow;
 
-    public UserLogin(String username, UUID userId, String ip, String status, LocalDateTime localDateTime) {
+    public LoginAttempt(String username, UUID userId, String ip, String status, LocalDateTime localDateTime) {
         this.username = username;
         this.userId = userId;
         this.ip = ip;
@@ -35,7 +35,7 @@ public class UserLogin implements Persistable<String> {
         this.newRow = true;
     }
 
-    public UserLogin() {
+    public LoginAttempt() {
 
     }
 
@@ -84,7 +84,7 @@ public class UserLogin implements Persistable<String> {
         return  dateTime;
     }
 
-    public void setStatus(UserLogin.Status status) {
+    public void setStatus(LoginAttempt.Status status) {
         this.status = status.name();
     }
 

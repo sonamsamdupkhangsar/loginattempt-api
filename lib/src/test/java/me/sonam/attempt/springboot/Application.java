@@ -1,4 +1,4 @@
-package me.sonam.siteaccess.springboot;
+package me.sonam.attempt.springboot;
 
 import io.r2dbc.spi.ConnectionFactory;
 import org.slf4j.Logger;

@@ -93,7 +93,7 @@ publishing {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             groupId = "me.sonam"
-            artifactId = "failedlogin-api"
+            artifactId = "loginattempt-api"
             version = "1.0.0-SNAPSHOT"
         }
     }

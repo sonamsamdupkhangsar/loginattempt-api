@@ -1,8 +1,8 @@
-package me.sonam.siteaccess.service;
+package me.sonam.attempt.service;
 
-import me.sonam.siteaccess.FailedLoginException;
-import me.sonam.siteaccess.persist.entity.UserLogin;
-import me.sonam.siteaccess.persist.repo.UserLoginRepository;
+import me.sonam.attempt.LoginAttemptException;
+import me.sonam.attempt.persist.entity.LoginAttempt;
+import me.sonam.attempt.persist.repo.LoginAttemptRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,19 +11,16 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
-public class SiteAccessLogger implements SiteAccessLog {
-    private static final Logger LOG = LoggerFactory.getLogger(SiteAccessLogger.class);
+public class LoginAttemptLogger implements AttemptLog {
+    private static final Logger LOG = LoggerFactory.getLogger(LoginAttemptLogger.class);
 
     public enum Login {
         CONTINUE, LOCK_USER_OUT
     }
-    public enum MaxAccess {
-        MAX_ACCESS, NOT_MAX_ACCESS
-    }
+
     @Value("${lockOnFailedLoginAttempts}")
     private int lockOnFailedLoginAttempts;
 
@@ -33,17 +30,17 @@ public class SiteAccessLogger implements SiteAccessLog {
     @Value("${resetAttemptIntervalInSeconds}")
     private int resetAttemptIntervalInSeconds;
 
-    private final UserLoginRepository userLoginRepository;
+    private final LoginAttemptRepository loginAttemptRepository;
 
-    public SiteAccessLogger(UserLoginRepository userLoginRepository) {
-        this.userLoginRepository = userLoginRepository;
+    public LoginAttemptLogger(LoginAttemptRepository loginAttemptRepository) {
+        this.loginAttemptRepository = loginAttemptRepository;
     }
 
     @Override
     public Mono<String> loginFailed(String username, UUID userId, String ipAddress, LocalDateTime dateTime) {
         LOG.info("checking if max number of tries reached in login failed");
-        return userLoginRepository.findById(username)
-                .switchIfEmpty(Mono.just(new UserLogin(username, userId, ipAddress, UserLogin.Status.FAILED.name(), dateTime)))
+        return loginAttemptRepository.findById(username)
+                .switchIfEmpty(Mono.just(new LoginAttempt(username, userId, ipAddress, LoginAttempt.Status.FAILED.name(), dateTime)))
                 .flatMap(userLogin -> {
                     // this flatmap will delete the userLogin (essentially reset the user login attempt) after an hour interval
                     LocalDateTime now = LocalDateTime.now();
@@ -51,13 +48,13 @@ public class SiteAccessLogger implements SiteAccessLog {
 
                     if (userLogin.getId() == null) {
                         LOG.error("userLogin.id is null");
-                        return Mono.error(new FailedLoginException("userLogin.id cannot be null"));
+                        return Mono.error(new LoginAttemptException("userLogin.id cannot be null"));
                     }
                     LOG.info("userLogin.getDateTime {}, secondsAfter {}", userLogin.getDateTime(), now);
                     if (duration.getSeconds() >= resetAttemptIntervalInSeconds){
                         LOG.info("reset user login attempt after {} seconds", resetAttemptIntervalInSeconds);
-                        return userLoginRepository.deleteById(userLogin.getId()).thenReturn(
-                                new UserLogin(username, userId, ipAddress, UserLogin.Status.FAILED.name(), dateTime));
+                        return loginAttemptRepository.deleteById(userLogin.getId()).thenReturn(
+                                new LoginAttempt(username, userId, ipAddress, LoginAttempt.Status.FAILED.name(), dateTime));
                     }
                     else {
                         LOG.info("user attempt is not after {} seconds, no need to delete.", resetAttemptIntervalInSeconds);
@@ -67,7 +64,7 @@ public class SiteAccessLogger implements SiteAccessLog {
 
                 .flatMap(userLogin -> {
                     userLogin.incrementAttemptCount();
-                    return userLoginRepository.save(userLogin);
+                    return loginAttemptRepository.save(userLogin);
                 })
                 .flatMap(userLogin -> {
                     if (userLogin.getAttemptCount() >= lockOnFailedLoginAttempts) {
@@ -85,10 +82,10 @@ public class SiteAccessLogger implements SiteAccessLog {
     public Mono<String> loginSuccess(String username, UUID userId, String ipAddress, LocalDateTime localDateTime) {
         LOG.info("entering login success record");
 
-        return userLoginRepository.findById(username)
+        return loginAttemptRepository.findById(username)
                 .doOnNext(userLogin -> LOG.info("found userLogin before deletion on success {}", userLogin))
-                .doOnNext(UserLogin::loginSuccess)
-                .flatMap(userLoginRepository::save)
+                .doOnNext(LoginAttempt::loginSuccess)
+                .flatMap(loginAttemptRepository::save)
                 .thenReturn(Login.CONTINUE.name());
     }
 
